@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.1.0 # 최신 버전 확인 가능
+    rev: 23.1.0
     hooks:
       - id: black
 
