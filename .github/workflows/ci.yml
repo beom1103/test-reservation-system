@@ -11,17 +11,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: test_reservation
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - "5432:5432"
-        options: --health-cmd "pg_isready -U admin" --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd "pg_isready -U ${{ secrets.POSTGRES_USER }}" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout Repository
@@ -35,8 +34,11 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
+      - name: Configure Poetry
+        run: poetry config virtualenvs.create false
+
       - name: Install Dependencies
-        run: poetry install
+        run: poetry install --no-root
 
       - name: Run Code Formatting Check (black)
         run: poetry run black --check .

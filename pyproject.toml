@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "시험 예약 시스템"
 authors = ["남기범 <gogot1103@naver.com>"]
 license = "MIT"
+package-mode = false  
 
 [tool.poetry.dependencies]
 python = "^3.11"
