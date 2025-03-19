@@ -1,9 +1,12 @@
 import secrets
 import warnings
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
+    AnyUrl,
+    BeforeValidator,
     EmailStr,
+    HttpUrl,
     PostgresDsn,
     computed_field,
     model_validator,
@@ -23,6 +26,7 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
+        # Use top level .env file (one level above ./backend/)
         env_file="../.env",
         env_ignore_empty=True,
         extra="ignore",
@@ -30,17 +34,23 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ALGORITHM: str
-
+    # 60 minutes * 24 hours * 8 days = 8 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
+    BACKEND_CORS_ORIGINS: Annotated[
+        list[AnyUrl] | str, BeforeValidator(parse_cors)
+    ] = []
+
     PROJECT_NAME: str
+    SENTRY_DSN: HttpUrl | None = None
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
@@ -77,4 +87,4 @@ class Settings(BaseSettings):
         return self
 
 
-settings = Settings()
+settings = Settings()  # type: ignore
