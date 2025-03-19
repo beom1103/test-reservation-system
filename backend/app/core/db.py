@@ -1,8 +1,8 @@
-from backend.app.models import User
 from sqlalchemy import select
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import settings
+from app.models import User
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
