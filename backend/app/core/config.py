@@ -1,9 +1,8 @@
 import warnings
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 from pydantic import (
-    AnyUrl,
-    BeforeValidator,
+    EmailStr,
     PostgresDsn,
     computed_field,
     model_validator,
@@ -31,10 +30,6 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = []
-
     PROJECT_NAME: str
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
@@ -54,6 +49,9 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
+    FIRST_SUPERUSER: EmailStr
+    FIRST_SUPERUSER_PASSWORD: str
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
@@ -68,6 +66,9 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
+        self._check_default_secret(
+            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
+        )
 
         return self
 
