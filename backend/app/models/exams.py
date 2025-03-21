@@ -7,7 +7,7 @@ class ExamBase(SQLModel):
     start_time: datetime
     end_time: datetime
     max_capacity: int = Field(ge=0)
-    confirmed_reserved_count: int = Field(ge=0)
+    confirmed_reserved_count: int = Field(ge=0, default=0)
 
 
 class ExamCreate(ExamBase):
