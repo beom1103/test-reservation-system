@@ -14,7 +14,7 @@ class TryoutRepository:
         self.session.refresh(tryout)
         return tryout
 
-    def list_upcoming(self, now, limit=20, offset=0):
+    def list_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:
         stmt = (
             select(Tryout)
             .where(Tryout.start_time > now)
