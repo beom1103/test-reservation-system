@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from sqlmodel import Session, create_engine
 
 from app.core.config import settings
-from app.models.exams import ExamCreate
+from app.models.tryouts import TryoutCreate
 from app.models.users import UserCreate
-from app.repository.exams import ExamRepository
+from app.repository.tryouts import TryoutRepository
 from app.repository.users import UserRepository
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
@@ -14,7 +14,7 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 def init_db(session: Session) -> None:
     now = datetime.now()
     user_repo = UserRepository(session=session)
-    exam_repo = ExamRepository(session=session)
+    tryout_repo = TryoutRepository(session=session)
 
     admin = user_repo.get_user_by_email(settings.FIRST_SUPERUSER)
 
@@ -38,13 +38,27 @@ def init_db(session: Session) -> None:
             )
             user_repo.create(user_create=user_in)
 
-        # 3. Create test exams
+        # 3. Create test tryouts
         for i in range(10):
-            start = now + timedelta(days=5 + i)
-            end = start + timedelta(hours=2)
-            exam = ExamCreate(
+            # i마다 2일 간격으로 시작시간 설정
+            start = now + timedelta(days=5 + i * 2)
+            name = f"Test Tryout {i + 1}"
+
+            if i < 5:
+                # 예약 가능한 케이스: registration_end_time > now
+                registration_start = now - timedelta(days=1)
+                registration_end = now + timedelta(days=2)
+            else:
+                # 예약 불가능한 케이스: registration_end_time < now
+                registration_start = now - timedelta(days=10)
+                registration_end = now - timedelta(days=1)
+
+            tryout = TryoutCreate(
+                name=name,
                 start_time=start,
-                end_time=end,
+                registration_start_time=registration_start,
+                registration_end_time=registration_end,
                 max_capacity=50000,
+                confirmed_reserved_count=0,
             )
-            exam_repo.create(exam_create=exam)
+            tryout_repo.create(tryouts_create=tryout)

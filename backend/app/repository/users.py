@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash
 from app.models.users import User, UserCreate
 
 
@@ -20,13 +20,4 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> User | None:
         statement = select(User).where(User.email == email)
-        session_user = self.session.exec(statement).first()
-        return session_user
-
-    def authenticate(self, email: str, password: str) -> User | None:
-        db_user = self.get_user_by_email(self=self.session, email=email)
-        if not db_user:
-            return None
-        if not verify_password(password, db_user.hashed_password):
-            return None
-        return db_user
+        return self.session.exec(statement).first()
