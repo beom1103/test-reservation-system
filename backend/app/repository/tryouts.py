@@ -14,6 +14,9 @@ class TryoutRepository:
         self.session.refresh(tryout)
         return tryout
 
+    def get_by_id(self, tryout_id: int) -> Tryout | None:
+        return self.session.get(Tryout, tryout_id)
+
     def list_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:
         stmt = (
             select(Tryout)
