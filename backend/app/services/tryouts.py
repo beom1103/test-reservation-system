@@ -57,7 +57,7 @@ class TryoutService:
         )
 
     def reserve_tryout(
-        self, user_id: int, tryout_id: int, reserved_seats: int = 1
+        self, user_id: uuid.UUID, tryout_id: int, reserved_seats: int = 1
     ) -> Reservation:
         def operation():
             tryout = self.repo.get_by_id(tryout_id, for_update=True)

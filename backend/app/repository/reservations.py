@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 from sqlmodel import Session, exists, func, select
 
@@ -19,7 +20,7 @@ class ReservationRepository:
         return reservation
 
     def get_user_reserved_tryout_ids(
-        self, user_id: int, tryout_ids: list[int]
+        self, user_id: uuid.UUID, tryout_ids: list[int]
     ) -> set[int]:
         stmt = (
             select(Reservation.tryout_id)
@@ -38,7 +39,7 @@ class ReservationRepository:
                 Tryout.end_time > start_time,
             )
         )
-        return self.session.exec(stmt).first()
+        return bool(self.session.exec(stmt).first())
 
     def count_user_reservations(self, user: User) -> int:
         stmt = select(func.count()).select_from(Reservation)

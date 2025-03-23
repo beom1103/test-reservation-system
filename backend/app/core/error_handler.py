@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.core.exceptions import (
@@ -11,7 +11,7 @@ from app.core.exceptions import (
 )
 
 
-def register_error_handlers(app) -> None:
+def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(TryoutNotFoundError)
     async def tryout_not_found_handler(
         _: Request, __: TryoutNotFoundError
