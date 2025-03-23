@@ -120,7 +120,16 @@ class ReservationService:
             if not is_admin and reservation.status != ReservationStatus.pending:
                 raise BadRequestError("확정된 예약은 삭제할 수 없습니다.")
 
+            if not is_admin and reservation.user_id != current_user.id:
+                raise AuthorizationError("본인 예약만 삭제할 수 있습니다.")
+
+            if reservation.status == ReservationStatus.deleted:
+                raise BadRequestError("이미 삭제된 예약입니다.")
+
             tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
+
+            if tryout.start_time <= datetime.now():
+                raise BadRequestError("시험 시작 이후에는 예약을 삭제할 수 없습니다.")
 
             if reservation.status == ReservationStatus.confirmed:
                 if tryout.confirmed_reserved_count < reservation.reserved_seats:

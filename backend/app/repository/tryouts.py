@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from backend.app.core.exceptions import NotFoundError
 from sqlmodel import Session, func, select
 
+from app.core.exceptions import NotFoundError
 from app.models.tryouts import Tryout, TryoutCreate, TryoutUpdateRequest
 
 
