@@ -59,7 +59,7 @@ class TryoutService:
     def reserve_tryout(
         self, user_id: uuid.UUID, tryout_id: int, reserved_seats: int = 1
     ) -> Reservation:
-        def operation():
+        def operation() -> Reservation:
             tryout = self.repo.get_by_id(tryout_id, for_update=True)
             if not tryout:
                 raise TryoutNotFoundError()
