@@ -1,9 +1,10 @@
 import datetime
 
-from sqlmodel import Session, exists, select
+from sqlmodel import Session, exists, func, select
 
 from app.models.reservations import Reservation, ReservationCreate
 from app.models.tryouts import Tryout
+from app.models.users import User
 
 
 class ReservationRepository:
@@ -38,3 +39,19 @@ class ReservationRepository:
             )
         )
         return self.session.exec(stmt).first()
+
+    def count_user_reservations(self, user: User) -> int:
+        stmt = select(func.count()).select_from(Reservation)
+        if not user.is_superuser:
+            stmt = stmt.where(Reservation.user_id == user.id)
+        return self.session.exec(stmt).one()
+
+    def paginate_user_reservations(
+        self, user: User, limit: int, offset: int
+    ) -> list[Reservation]:
+        stmt = select(Reservation)
+        if not user.is_superuser:
+            stmt = stmt.where(Reservation.user_id == user.id)
+
+        stmt = stmt.offset(offset).limit(limit)
+        return self.session.exec(stmt).all()

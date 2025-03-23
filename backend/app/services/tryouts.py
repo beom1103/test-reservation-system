@@ -6,6 +6,7 @@ from app.core.exceptions import (
     TryoutNotFoundError,
 )
 from app.core.transaction import TransactionHelper
+from app.models.common import PaginatedResponse
 from app.models.reservations import Reservation, ReservationCreate
 from app.models.tryouts import TryoutPublic
 from app.repository.tryouts import TryoutRepository
@@ -32,27 +33,27 @@ class TryoutService:
             **tryout.model_dump(), isApplied=(tryout_id in reserved_ids)
         )
 
-    def get_upcoming_tryouts(
+    def paginate_upcoming_tryouts(
         self, user_id: int, limit: int, offset: int
-    ) -> list[TryoutPublic]:
+    ) -> PaginatedResponse[TryoutPublic]:
         now = datetime.now()
-        tryouts = self.repo.list_upcoming(now=now, limit=limit, offset=offset)
-
-        result = []
-        if not tryouts:
-            return result
+        tryouts = self.repo.paginate_upcoming(now=now, limit=limit, offset=offset)
+        total = self.repo.count_upcoming(now=now)
 
         tryout_ids = [t.id for t in tryouts]
-
         reserved_ids = self.reservation_service.repo.get_user_reserved_tryout_ids(
             user_id=user_id, tryout_ids=tryout_ids
         )
 
-        for t in tryouts:
-            result.append(
-                TryoutPublic(**t.model_dump(), isApplied=(t.id in reserved_ids))
-            )
-        return result
+        items = [
+            TryoutPublic(**t.model_dump(), isApplied=(t.id in reserved_ids))
+            for t in tryouts
+        ]
+
+        return PaginatedResponse[TryoutPublic](
+            total=total,
+            items=items,
+        )
 
     def reserve_tryout(
         self, user_id: int, tryout_id: int, reserved_seats: int = 1

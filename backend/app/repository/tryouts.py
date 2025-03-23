@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.models.tryouts import Tryout, TryoutCreate
 
@@ -20,7 +20,7 @@ class TryoutRepository:
             return self.session.exec(stmt).first()
         return self.session.get(Tryout, tryout_id)
 
-    def list_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:
+    def paginate_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:
         stmt = (
             select(Tryout)
             .where(Tryout.start_time > now)
@@ -30,3 +30,7 @@ class TryoutRepository:
             .limit(limit)
         )
         return self.session.exec(stmt).all()
+
+    def count_upcoming(self, now) -> int:
+        stmt = select(func.count()).select_from(Tryout).where(Tryout.start_time > now)
+        return self.session.exec(stmt).one()
