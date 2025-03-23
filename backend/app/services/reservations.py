@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 from sqlmodel import Session
 
@@ -22,7 +23,7 @@ class ReservationService:
         self.repo = ReservationRepository(session)
 
     def validate_reservation_or_raise(
-        self, tryout: Tryout, user_id: int, reserved_seats: int, now: datetime
+        self, tryout: Tryout, user_id: uuid.UUID, reserved_seats: int, now: datetime
     ) -> None:
         if not (tryout.registration_start_time <= now <= tryout.registration_end_time):
             raise InvalidReservationPeriodError()

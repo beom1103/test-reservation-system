@@ -23,10 +23,8 @@ class ReservationRepository:
     def get_user_reserved_tryout_ids(
         self, user_id: uuid.UUID, tryout_ids: list[int]
     ) -> set[int]:
-        stmt = (
-            select(Reservation.tryout_id)
-            .where(Reservation.user_id == user_id)
-            .where(Reservation.tryout_id.in_(tryout_ids))
+        stmt = select(Reservation.tryout_id).where(
+            and_(Reservation.user_id == user_id, Reservation.tryout_id.in_(tryout_ids))
         )
         return set(self.session.exec(stmt).all())
 
