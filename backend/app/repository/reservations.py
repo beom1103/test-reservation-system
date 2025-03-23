@@ -22,4 +22,4 @@ class ReservationRepository:
             .where(Reservation.user_id == user_id)
             .where(Reservation.tryout_id.in_(tryout_ids))
         )
-        return {r[0] for r in self.session.exec(stmt).all()}
+        return set(self.session.exec(stmt).all())

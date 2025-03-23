@@ -14,7 +14,10 @@ class TryoutRepository:
         self.session.refresh(tryout)
         return tryout
 
-    def get_by_id(self, tryout_id: int) -> Tryout | None:
+    def get_by_id(self, tryout_id: int, for_update: bool = False) -> Tryout | None:
+        if for_update:
+            stmt = select(Tryout).where(Tryout.id == tryout_id).with_for_update()
+            return self.session.exec(stmt).first()
         return self.session.get(Tryout, tryout_id)
 
     def list_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:

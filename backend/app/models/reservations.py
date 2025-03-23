@@ -14,8 +14,8 @@ class ReservationBase(SQLModel):
     user_id: uuid.UUID = Field(foreign_key="users.id")
     tryout_id: int = Field(foreign_key="tryouts.id")
     reserved_seats: int = Field(ge=1)
-    status: ReservationStatus = Field(default=ReservationStatus.pending)
-    model_config = {"arbitrary_types_allowed": True}
+    status: str = Field(default=ReservationStatus.pending)
+    model_config = {"from_attributes": True}
 
 
 class ReservationCreate(ReservationBase):

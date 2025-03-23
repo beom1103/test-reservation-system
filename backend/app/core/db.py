@@ -40,7 +40,6 @@ def init_db(session: Session) -> None:
 
         # 3. Create test tryouts
         for i in range(10):
-            # i마다 2일 간격으로 시작시간 설정
             start = now + timedelta(days=5 + i * 2)
             name = f"Test Tryout {i + 1}"
 
