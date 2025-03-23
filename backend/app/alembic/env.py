@@ -19,7 +19,7 @@ fileConfig(config.config_file_name)
 # target_metadata = None
 
 from sqlmodel import SQLModel  # noqa
-from app.models.exams import Exam
+from app.models.tryouts import Tryout
 from app.models.users import User
 from app.models.reservations import Reservation
 from app.core.config import settings  # noqa

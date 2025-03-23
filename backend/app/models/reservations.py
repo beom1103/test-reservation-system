@@ -12,10 +12,10 @@ class ReservationStatus(str, Enum):
 
 class ReservationBase(SQLModel):
     user_id: uuid.UUID = Field(foreign_key="users.id")
-    exam_id: int = Field(foreign_key="exams.id")
+    tryout_id: int = Field(foreign_key="tryouts.id")
     reserved_seats: int = Field(ge=1)
-    status: ReservationStatus = Field(default=ReservationStatus.pending)
-    model_config = {"arbitrary_types_allowed": True}
+    status: str = Field(default=ReservationStatus.pending)
+    model_config = {"from_attributes": True}
 
 
 class ReservationCreate(ReservationBase):
@@ -25,7 +25,7 @@ class ReservationCreate(ReservationBase):
 class Reservation(ReservationBase, table=True):
     __tablename__ = "reservations"
     id: int = Field(default=None, primary_key=True)
-    __table_args__ = (UniqueConstraint("user_id", "exam_id", name="uq_user_exam"),)
+    __table_args__ = (UniqueConstraint("user_id", "tryout_id", name="uq_user_tryout"),)
 
 
 class ReservationPublic(ReservationBase):
