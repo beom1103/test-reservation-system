@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlmodel import Session, func, select
 
 from app.models.tryouts import Tryout, TryoutCreate
@@ -20,7 +22,7 @@ class TryoutRepository:
             return self.session.exec(stmt).first()
         return self.session.get(Tryout, tryout_id)
 
-    def paginate_upcoming(self, now, limit=20, offset=0) -> list[Tryout]:
+    def paginate_upcoming(self, now: datetime, limit=20, offset=0) -> list[Tryout]:
         stmt = (
             select(Tryout)
             .where(Tryout.start_time > now)
