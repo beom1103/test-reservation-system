@@ -68,7 +68,7 @@ backend/
 ### 📌 폴더 구조 설계 이유
 
 - **app 단위**로 모든 내부 코드가 집중되도록 구성해 유지보수성과 테스트 편의성 확보
-- `core`, `models`, `repository`, `services`, `routers`를 명확히 나눠 **MVC 구조와 유사한 계층 구분**을 적용
+- `core`, `models`, `repository`, `services`, `routers`를 명확히 나눠 **MVC 구조와 유사한 Layered 구분**을 적용
 - `services`는 트랜잭션 처리, 유효성 검사, 예외 처리를 담당하고, 외부에서는 이 계층만 호출하도록 함
 
 ---
