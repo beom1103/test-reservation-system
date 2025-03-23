@@ -115,7 +115,7 @@ class ReservationService:
         self,
         reservation_id: int,
     ) -> Reservation:
-        def operation():
+        def operation() -> Reservation:
             reservation = self.repo.get_by_id(reservation_id, for_update=True)
             tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
 
@@ -136,7 +136,7 @@ class ReservationService:
     def delete_reservation(
         self, reservation_id: int, current_user: User
     ) -> Reservation:
-        def operation():
+        def operation() -> Reservation:
             reservation = self.repo.get_by_id(reservation_id, for_update=True)
             tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
 
@@ -164,7 +164,7 @@ class ReservationService:
         reservation_id: int,
         update_data: ReservationUpdateRequest,
     ) -> Reservation:
-        def operation():
+        def operation() -> Reservation:
             reservation = self.repo.get_by_id(reservation_id, for_update=True)
             tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
             now = datetime.now()
@@ -191,7 +191,7 @@ class ReservationService:
         self,
         user: User,
         reservation: Reservation,
-        update_data: ReservationUpdate,
+        update_data: ReservationUpdateRequest,
         tryout: Tryout,
         now: datetime,
     ) -> None:
