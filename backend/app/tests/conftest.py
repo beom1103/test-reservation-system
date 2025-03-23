@@ -14,7 +14,7 @@ from app.models.users import User, UserCreate
 from app.repository.users import UserRepository
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         init_db(session)
