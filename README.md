@@ -104,6 +104,10 @@ bash ./scripts/test.sh
 
 ## 📚 API 문서
 
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+  > API 문서는 FastAPI에서 자동 생성되며, 실제 요청/응답 예시도 포함되어 있습니다.
+
 ### 🛣️ 주요 API 라우트
 
 #### [인증]
@@ -123,8 +127,3 @@ bash ./scripts/test.sh
 - `PATCH /api/v1/reservations/{id}` : 예약 수정
 - `DELETE /api/v1/reservations/{id}/delete` : 예약 삭제
 - `POST /api/v1/reservations/{id}/confirm` : 예약 확정 (어드민 전용)
-
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-- ReDoc (정적 스타일): [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-> Swagger 문서는 FastAPI에서 자동 생성되며, 실제 요청/응답 예시도 포함되어 있습니다.

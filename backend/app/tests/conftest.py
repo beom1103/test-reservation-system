@@ -4,6 +4,7 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import EmailStr
 from sqlmodel import Session, delete
 
 from app.core.config import settings
@@ -39,10 +40,17 @@ def superuser_token_headers(client: TestClient) -> dict[str, str]:
 
 
 @pytest.fixture(scope="function")
-def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
-    return authentication_token_from_email(
-        client=client, email="user0@example.com", db=db
-    )
+def normal_user_token_headers0(
+    client: TestClient, db: Session, email: EmailStr = "user0@example.com"
+) -> dict[str, str]:
+    return authentication_token_from_email(client=client, email=email, db=db)
+
+
+@pytest.fixture(scope="function")
+def normal_user_token_headers1(
+    client: TestClient, db: Session, email: EmailStr = "user1@example.com"
+) -> dict[str, str]:
+    return authentication_token_from_email(client=client, email=email, db=db)
 
 
 def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
@@ -70,7 +78,7 @@ def user_authentication_headers(
 
 
 def authentication_token_from_email(
-    *, client: TestClient, email: str, db: Session
+    *, client: TestClient, email: EmailStr, db: Session
 ) -> dict[str, str]:
     """
     Return a valid token for the user with given email.

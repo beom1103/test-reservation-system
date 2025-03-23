@@ -69,6 +69,6 @@ def reserve_tryout(
 ) -> Reservation:
     return TryoutService(session).reserve_tryout(
         tryout_id=tryout_id,
-        user_id=current_user.id,
+        user=current_user,
         reserved_seats=reserved_seats,
     )
