@@ -104,19 +104,19 @@ bash ./scripts/test.sh
 
 ## 📚 API 문서
 
-## 🛣️ 주요 API 라우트
+### 🛣️ 주요 API 라우트
 
-### [인증]
+#### [인증]
 
 - `POST /api/v1/utils/login/access-token` : 액세스 토큰 발급 (OAuth2)
 
-### [시험 일정 Tryouts]
+#### [시험 일정 Tryouts]
 
 - `GET /api/v1/tryouts` : 시험 일정 목록 조회
 - `GET /api/v1/tryouts/{id}` : 시험 일정 상세 조회
 - `POST /api/v1/tryouts/{id}/reserve` : 시험 일정 예약 신청
 
-### [예약 Reservations]
+#### [예약 Reservations]
 
 - `GET /api/v1/reservations` : 예약 목록 조회 (본인 or 어드민 전체)
 - `GET /api/v1/reservations/{id}` : 예약 단건 조회
