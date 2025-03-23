@@ -36,6 +36,7 @@ def test_update_reservation(
         f"{settings.API_V1_STR}/tryouts/2/reserve?reserved_seats=2",
         headers=normal_user_token_headers,
     )
+
     reservation_id = create_res.json()["id"]
 
     update_data = {"reserved_seats": 4}
@@ -71,7 +72,7 @@ def test_admin_confirm_reservation(
 ) -> None:
     user_res = client.post(
         f"{settings.API_V1_STR}/tryouts/4/reserve?reserved_seats=2",
-        headers=superuser_token_headers,  # 예제상에서는 어드민도 예약 가능하다고 가정
+        headers=superuser_token_headers,
     )
     reservation_id = user_res.json()["id"]
 

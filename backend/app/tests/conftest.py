@@ -9,6 +9,7 @@ from sqlmodel import Session, delete
 from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
+from app.models.reservations import Reservation
 from app.models.users import User, UserCreate
 from app.repository.users import UserRepository
 
@@ -19,6 +20,8 @@ def db() -> Generator[Session, None, None]:
         init_db(session)
         yield session
 
+        statement = delete(Reservation)
+        session.execute(statement)
         statement = delete(User)
         session.execute(statement)
         session.commit()
