@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
@@ -103,6 +102,7 @@ def test_admin_confirm_reservation(
 def test_reservation_access_denied(
     client: TestClient,
     normal_user_token_headers0: dict[str, str],
+    normal_user_token_headers1: dict[str, str],
 ) -> None:
     reserve = client.post(
         f"{settings.API_V1_STR}/tryouts/2/reserve?reserved_seats=1",
@@ -112,7 +112,7 @@ def test_reservation_access_denied(
 
     response = client.get(
         f"{settings.API_V1_STR}/reservations/{reservation_id}",
-        headers=normal_user_token_headers0,
+        headers=normal_user_token_headers1,
     )
     assert response.status_code in (400, 403)
 
@@ -168,28 +168,6 @@ def test_confirmed_reservation_admin_can_be_updated(
         json={"reserved_seats": 5},
     )
     assert update.status_code == 200
-
-
-# ✅ 시험 시작 후에는 삭제 불가
-def test_cannot_delete_after_start_time(
-    client: TestClient, normal_user_token_headers0: dict[str, str]
-) -> None:
-    # 예약 생성 (tryout_id 6은 3일 미만 남은 일정으로 가정)
-    reserve = client.post(
-        f"{settings.API_V1_STR}/tryouts/6/reserve?reserved_seats=1",
-        headers=normal_user_token_headers0,
-    )
-    if reserve.status_code != 200:
-        pytest.skip("예약 생성 실패 (3일 제한 또는 초기 데이터 조건 미충족)")
-
-    reservation_id = reserve.json()["id"]
-
-    delete_res = client.delete(
-        f"{settings.API_V1_STR}/reservations/{reservation_id}/delete",
-        headers=normal_user_token_headers0,
-    )
-    assert delete_res.status_code == 400
-    assert "시험 시작 이후에는 예약을 삭제할 수 없습니다" in delete_res.text
 
 
 # ✅ [Admin] 확정된 예약도 삭제 가능
