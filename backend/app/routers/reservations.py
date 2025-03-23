@@ -13,8 +13,12 @@ router = APIRouter(prefix="/reservations", tags=["reservations"])
 
 @router.get(
     "",
-    summary="예약 목록 조회",
-    description="일반 사용자는 자신의 예약 목록을, 어드민은 모든 예약 목록을 조회할 수 있습니다.",
+    summary="[User/Admin] 예약 목록 조회",
+    description="""
+- 일반 사용자는 본인의 예약만 확인할 수 있습니다.
+- 어드민은 전체 예약 목록을 조회할 수 있습니다.
+- `limit`, `offset`을 통해 페이지네이션이 가능합니다.
+""",
     response_model=PaginatedResponse[Reservation],
 )
 def paginate_reservations(
@@ -32,8 +36,10 @@ def paginate_reservations(
 
 @router.get(
     "/{reservation_id}",
-    summary="예약 단건 조회",
-    description="본인 예약 또는 어드민은 단건 예약 조회 가능",
+    summary="[User/Admin] 예약 상세 조회",
+    description="""
+- 본인의 예약이거나, 어드민인 경우 해당 예약 상세 정보를 조회할 수 있습니다.
+""",
     response_model=Reservation,
 )
 def get_reservation_by_id(
@@ -50,7 +56,12 @@ def get_reservation_by_id(
 @router.post(
     "/{reservation_id}/confirm",
     response_model=Reservation,
-    summary="예약 확정",
+    summary="[Admin 전용] 예약 확정 처리",
+    description="""
+- 어드민 전용 기능입니다.
+- 고객이 신청한 예약을 확정합니다.
+- 이미 확정된 예약이거나, 시험 시작 시간이 지난 경우 확정할 수 없습니다.
+""",
     dependencies=[Depends(get_current_active_superuser)],
 )
 def confirm_reservation(
@@ -63,7 +74,12 @@ def confirm_reservation(
 @router.delete(
     "/{reservation_id}/delete",
     response_model=Reservation,
-    summary="예약 삭제",
+    summary="[User/Admin] 예약 삭제",
+    description="""
+- 고객은 본인의 예약 중 '확정되지 않은' 예약만 삭제할 수 있습니다.
+- 어드민은 모든 예약을 삭제할 수 있습니다.
+- 시험 시작 이후에는 삭제가 제한됩니다.
+""",
 )
 def reject_reservation(
     reservation_id: int,
@@ -78,7 +94,12 @@ def reject_reservation(
 @router.patch(
     "/{reservation_id}",
     response_model=Reservation,
-    summary="예약 수정",
+    summary="[User/Admin] 예약 수정",
+    description="""
+- 고객은 본인의 예약 중 '확정되지 않은' 경우에만 수정할 수 있습니다.
+- 어드민은 모든 예약을 수정할 수 있습니다.
+- 시험 시작 이후에는 예약 수정이 불가능합니다.
+""",
 )
 def update_reservation(
     reservation_id: int,

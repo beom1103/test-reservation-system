@@ -16,6 +16,7 @@ from app.models.reservations import (
     Reservation,
     ReservationStatus,
     ReservationUpdate,
+    ReservationUpdateRequest,
 )
 from app.models.tryouts import Tryout, TryoutUpdateRequest
 from app.models.users import User
@@ -161,7 +162,7 @@ class ReservationService:
         self,
         user: User,
         reservation_id: int,
-        update_data: ReservationUpdate,
+        update_data: ReservationUpdateRequest,
     ) -> Reservation:
         def operation():
             reservation = self.repo.get_by_id(reservation_id, for_update=True)
