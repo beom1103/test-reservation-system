@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions import (
     AlreadyReservedError,
     AuthorizationError,
+    BadRequestError,
     InvalidReservationPeriodError,
     ReservationNotFoundError,
     TryoutFullError,
@@ -53,8 +54,16 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(AuthorizationError)
     async def not_authorized_handler(
-        _: Request, __: AuthorizationError
+        _: Request, exc: AuthorizationError
     ) -> JSONResponse:
         return JSONResponse(
-            status_code=403, content={"detail": "접근 권한이 없습니다."}
+            status_code=403,
+            content={"detail": str(exc) or "이미 신청된 시험입니다."},
+        )
+
+    @app.exception_handler(BadRequestError)
+    async def bad_request_handler(_: Request, exc: BadRequestError) -> JSONResponse:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc) or "잘못된 요청입니다."},
         )

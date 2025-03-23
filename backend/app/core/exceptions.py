@@ -20,3 +20,7 @@ class ReservationNotFoundError(Exception):
 
 class AuthorizationError(Exception):
     pass
+
+
+class BadRequestError(Exception):
+    pass

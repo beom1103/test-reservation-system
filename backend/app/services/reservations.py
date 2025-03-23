@@ -6,21 +6,30 @@ from sqlmodel import Session
 from app.core.exceptions import (
     AlreadyReservedError,
     AuthorizationError,
+    BadRequestError,
     InvalidReservationPeriodError,
     ReservationNotFoundError,
     TryoutFullError,
+    TryoutNotFoundError,
 )
+from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
-from app.models.reservations import Reservation
-from app.models.tryouts import Tryout
+from app.models.reservations import (
+    Reservation,
+    ReservationStatus,
+    ReservationUpdateRequest,
+)
+from app.models.tryouts import Tryout, TryoutUpdateRequest
 from app.models.users import User
 from app.repository.reservations import ReservationRepository
+from app.repository.tryouts import TryoutRepository
 
 
 class ReservationService:
     def __init__(self, session: Session):
         self.session = session
         self.repo = ReservationRepository(session)
+        self.tryout_repo = TryoutRepository(session)
 
     def validate_reservation_or_raise(
         self, tryout: Tryout, user_id: uuid.UUID, reserved_seats: int, now: datetime
@@ -66,3 +75,66 @@ class ReservationService:
             raise AuthorizationError("접근 권한이 없습니다.")
 
         return Reservation.model_validate(reservation)
+
+    def reject_reservation(
+        self, reservation_id: int, current_user: User
+    ) -> Reservation:
+        return self.__update_status(
+            reservation_id=reservation_id,
+            new_status=ReservationStatus.cancelled,
+            current_user=current_user,
+            adjust_capacity=False,
+        )
+
+    def confirm_reservation(
+        self, reservation_id: int, current_user: User
+    ) -> Reservation:
+        return self.__update_status(
+            reservation_id=reservation_id,
+            new_status=ReservationStatus.confirmed,
+            current_user=current_user,
+            adjust_capacity=True,
+        )
+
+    def __update_status(
+        self,
+        reservation_id: int,
+        new_status: str,
+        current_user: User,
+        adjust_capacity: bool,
+    ) -> Reservation:
+        if not current_user.is_superuser:
+            raise AuthorizationError("어드민만 예약 상태를 변경할 수 있습니다.")
+
+        def operation():
+            reservation = self.repo.get_by_id(reservation_id, for_update=True)
+            if not reservation:
+                raise ReservationNotFoundError()
+
+            if reservation.status != ReservationStatus.pending:
+                raise BadRequestError("이미 확정되었거나 취소된 예약입니다.")
+
+            tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
+
+            if not tryout:
+                raise TryoutNotFoundError()
+
+            if adjust_capacity:
+                if (
+                    tryout.confirmed_reserved_count + reservation.reserved_seats
+                    > tryout.max_capacity
+                ):
+                    raise TryoutFullError()
+
+                tryout_update = TryoutUpdateRequest(
+                    confirmed_reserved_count=tryout.confirmed_reserved_count
+                    + reservation.reserved_seats
+                )
+                self.tryout_repo.update(tryout, tryout_update)
+
+            update_data = ReservationUpdateRequest(status=new_status)
+            self.repo.update(reservation, update_data)
+
+            return reservation
+
+        return TransactionHelper(self.session).run(operation)

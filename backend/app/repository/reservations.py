@@ -4,7 +4,12 @@ from datetime import datetime
 from sqlalchemy import and_, exists, func
 from sqlmodel import Session, col, select
 
-from app.models.reservations import Reservation, ReservationCreate
+from app.models.reservations import (
+    Reservation,
+    ReservationCreate,
+    ReservationStatus,
+    ReservationUpdateRequest,
+)
 from app.models.tryouts import Tryout
 from app.models.users import User
 
@@ -40,6 +45,9 @@ class ReservationRepository:
                     col(Reservation.user_id) == user_id,
                     col(Tryout.start_time) < end_time,
                     col(Tryout.end_time) > start_time,
+                    col(Reservation.status).in_(
+                        [ReservationStatus.pending, ReservationStatus.confirmed]
+                    ),
                 )
             )
         )
@@ -61,5 +69,19 @@ class ReservationRepository:
         stmt = stmt.offset(offset).limit(limit)
         return list(self.session.exec(stmt).all())
 
-    def get_by_id(self, id: int) -> Reservation | None:
-        return self.session.get(Reservation, id)
+    def get_by_id(self, id: int, for_update: bool = False) -> Reservation | None:
+        return self.session.get(Reservation, id, with_for_update=for_update)
+
+    def update(
+        self, reservation: Reservation, update_data: ReservationUpdateRequest
+    ) -> Reservation:
+        if update_data.reserved_seats is not None:
+            reservation.reserved_seats = update_data.reserved_seats
+
+        if update_data.status is not None:
+            reservation.status = update_data.status
+
+        self.session.add(reservation)
+        self.session.commit()
+        self.session.refresh(reservation)
+        return reservation

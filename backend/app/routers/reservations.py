@@ -45,3 +45,47 @@ def get_reservation_by_id(
         reservation_id=reservation_id,
         current_user=current_user,
     )
+
+
+@router.post(
+    "/{reservation_id}/confirm",
+    response_model=Reservation,
+    summary="예약 확정",
+)
+def confirm_reservation(
+    reservation_id: int,
+    session: SessionDep,
+    current_user: User = Depends(get_current_user),
+) -> Reservation:
+    return ReservationService(session).confirm_reservation(
+        reservation_id, current_user=current_user
+    )
+
+
+@router.post(
+    "/{reservation_id}/reject",
+    response_model=Reservation,
+    summary="예약 거절",
+)
+def reject_reservation(
+    reservation_id: int,
+    session: SessionDep,
+    current_user: User = Depends(get_current_user),
+) -> Reservation:
+    return ReservationService(session).reject_reservation(
+        reservation_id, current_user=current_user
+    )
+
+
+# @router.patch("/{reservation_id}", response_model=Reservation, summary="예약 수정")
+# def update_reservation(
+#     reservation_id: int,
+#     data: ReservationUpdateRequest,
+#     session: SessionDep,
+#     current_user: User = Depends(get_current_user),
+# ) -> Reservation:
+#     return ReservationService(session).update_reservation(
+#         reservation_id=reservation_id,
+#         data=data,
+#         current_user=current_user,
+#     )
