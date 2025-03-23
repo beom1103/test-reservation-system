@@ -28,7 +28,7 @@ class TryoutRepository:
         stmt = (
             select(Tryout)
             .where(Tryout.start_time > now)
-            .order_by(Tryout.id, Tryout.start_time)
+            .order_by("id", "start_time")
             .offset(offset)
             .limit(limit)
         )

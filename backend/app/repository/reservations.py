@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import and_, exists, func
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.models.reservations import Reservation, ReservationCreate
 from app.models.tryouts import Tryout
@@ -24,7 +24,10 @@ class ReservationRepository:
         self, user_id: uuid.UUID, tryout_ids: list[int]
     ) -> set[int]:
         stmt = select(Reservation.tryout_id).where(
-            and_(Reservation.user_id == user_id, Reservation.tryout_id.in_(tryout_ids))
+            and_(
+                col(Reservation.user_id) == user_id,
+                col(Reservation.tryout_id).in_(tryout_ids),
+            )
         )
         return set(self.session.exec(stmt).all())
 
@@ -34,9 +37,9 @@ class ReservationRepository:
         stmt = select(
             exists().where(
                 and_(
-                    Reservation.user_id == user_id,
-                    Tryout.start_time < end_time,
-                    Tryout.end_time > start_time,
+                    col(Reservation.user_id) == user_id,
+                    col(Tryout.start_time) < end_time,
+                    col(Tryout.end_time) > start_time,
                 )
             )
         )
