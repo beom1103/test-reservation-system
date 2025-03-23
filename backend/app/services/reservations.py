@@ -4,7 +4,9 @@ from sqlmodel import Session
 
 from app.core.exceptions import (
     AlreadyReservedError,
+    AuthorizationError,
     InvalidReservationPeriodError,
+    ReservationNotFoundError,
     TryoutFullError,
 )
 from app.models.common import PaginatedResponse
@@ -51,3 +53,15 @@ class ReservationService:
             items=[Reservation.model_validate(r) for r in reservations],
             total=total,
         )
+
+    def get_reservation_by_id(
+        self, reservation_id: int, current_user: User
+    ) -> Reservation:
+        reservation = self.repo.get_by_id(reservation_id)
+        if not reservation:
+            raise ReservationNotFoundError()
+
+        if not current_user.is_superuser and reservation.user_id != current_user.id:
+            raise AuthorizationError("접근 권한이 없습니다.")
+
+        return Reservation.model_validate(reservation)

@@ -16,3 +16,7 @@ class InvalidReservationPeriodError(Exception):
 
 class ReservationNotFoundError(Exception):
     pass
+
+
+class AuthorizationError(Exception):
+    pass

@@ -55,3 +55,6 @@ class ReservationRepository:
 
         stmt = stmt.offset(offset).limit(limit)
         return self.session.exec(stmt).all()
+
+    def get_by_id(self, id: int) -> Reservation:
+        return self.session.get(Reservation, id)

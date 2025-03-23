@@ -28,3 +28,20 @@ def paginate_reservations(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get(
+    "/{reservation_id}",
+    summary="예약 단건 조회",
+    description="본인 예약 또는 어드민은 단건 예약 조회 가능",
+    response_model=Reservation,
+)
+def get_reservation_by_id(
+    reservation_id: int,
+    session: SessionDep,
+    current_user: User = Depends(get_current_user),
+) -> Reservation:
+    return ReservationService(session).get_reservation_by_id(
+        reservation_id=reservation_id,
+        current_user=current_user,
+    )
