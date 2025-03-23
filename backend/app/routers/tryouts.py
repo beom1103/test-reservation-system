@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette.status import HTTP_400_BAD_REQUEST
+from fastapi import APIRouter, Depends, Query
 
 from app.dependencies import CurrentUser, SessionDep, get_current_user
 from app.models.common import PaginatedResponse
@@ -29,12 +28,9 @@ def paginate_tryouts(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ) -> PaginatedResponse[TryoutPublic]:
-    try:
-        return TryoutService(session).paginate_upcoming_tryouts(
-            limit=limit, offset=offset, user_id=current_user.id
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
+    return TryoutService(session).paginate_upcoming_tryouts(
+        limit=limit, offset=offset, user_id=current_user.id
+    )
 
 
 @router.get(
