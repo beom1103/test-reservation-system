@@ -6,6 +6,7 @@ from sqlmodel import Field, SQLModel
 class TryoutBase(SQLModel):
     name: str
     start_time: datetime
+    end_time: datetime
     registration_start_time: datetime
     registration_end_time: datetime
     max_capacity: int = Field(ge=0)

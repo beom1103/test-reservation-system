@@ -40,24 +40,25 @@ def init_db(session: Session) -> None:
 
         # 3. Create test tryouts
         for i in range(10):
-            start = now + timedelta(days=5 + i * 2)
             name = f"Test Tryout {i + 1}"
 
             if i < 5:
-                # 예약 가능한 케이스: registration_end_time > now
-                registration_start = now - timedelta(days=1)
-                registration_end = now + timedelta(days=2)
+                # 예약 가능한 케이스
+                start = now + timedelta(days=10)
+                registration_start = start - timedelta(days=1)
             else:
-                # 예약 불가능한 케이스: registration_end_time < now
-                registration_start = now - timedelta(days=10)
-                registration_end = now - timedelta(days=1)
+                # 예약 불가능한 케이스
+                start = now + timedelta(days=2)
 
+            registration_start = start - timedelta(days=10)
+            registration_end = start - timedelta(days=3)
             tryout = TryoutCreate(
                 name=name,
                 start_time=start,
+                end_time=start + timedelta(hours=2),
                 registration_start_time=registration_start,
                 registration_end_time=registration_end,
                 max_capacity=50000,
-                confirmed_reserved_count=0,
+                confirmed_reserved_count=i * 5000,
             )
             tryout_repo.create(tryouts_create=tryout)

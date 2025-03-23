@@ -1,6 +1,9 @@
-from sqlmodel import Session, select
+import datetime
+
+from sqlmodel import Session, exists, select
 
 from app.models.reservations import Reservation, ReservationCreate
+from app.models.tryouts import Tryout
 
 
 class ReservationRepository:
@@ -23,3 +26,15 @@ class ReservationRepository:
             .where(Reservation.tryout_id.in_(tryout_ids))
         )
         return set(self.session.exec(stmt).all())
+
+    def has_overlapping_reservation(
+        self, user_id: int, start_time: datetime, end_time: datetime
+    ) -> bool:
+        stmt = select(
+            exists().where(
+                Reservation.user_id == user_id,
+                Tryout.start_time < end_time,
+                Tryout.end_time > start_time,
+            )
+        )
+        return self.session.exec(stmt).first()

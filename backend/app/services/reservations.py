@@ -28,5 +28,12 @@ class ReservationService:
         if tryout.id in reserved_ids:
             raise AlreadyReservedError()
 
+        if self.repo.has_overlapping_reservation(
+            user_id=user_id,
+            start_time=tryout.start_time,
+            end_time=tryout.end_time,
+        ):
+            raise AlreadyReservedError("동시간대에 이미 예약된 시험이 존재합니다.")
+
         if tryout.confirmed_reserved_count + reserved_seats > tryout.max_capacity:
             raise TryoutFullError()

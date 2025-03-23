@@ -24,9 +24,10 @@ def register_error_handlers(app):
         )
 
     @app.exception_handler(AlreadyReservedError)
-    async def already_reserved_handler(_: Request, __: AlreadyReservedError):
+    async def already_reserved_handler(_: Request, exc: AlreadyReservedError):
         return JSONResponse(
-            status_code=400, content={"detail": "이미 신청된 시험입니다."}
+            status_code=400,
+            content={"detail": str(exc) or "이미 신청된 시험입니다."},
         )
 
     @app.exception_handler(TryoutFullError)
