@@ -15,7 +15,7 @@ from app.models.common import PaginatedResponse
 from app.models.reservations import (
     Reservation,
     ReservationStatus,
-    ReservationUpdateRequest,
+    ReservationUpdate,
 )
 from app.models.tryouts import Tryout, TryoutUpdateRequest
 from app.models.users import User
@@ -38,6 +38,7 @@ class ReservationService:
         reserved_ids = self.repo.get_user_reserved_tryout_ids(
             user_id=user_id, tryout_ids=[tryout.id]
         )
+
         if tryout.id in reserved_ids:
             raise AlreadyReservedError()
 
@@ -122,7 +123,7 @@ class ReservationService:
             updated_count = tryout.confirmed_reserved_count + reservation.reserved_seats
             tryout_update = TryoutUpdateRequest(confirmed_reserved_count=updated_count)
 
-            update_data = ReservationUpdateRequest(status=ReservationStatus.confirmed)
+            update_data = ReservationUpdate(status=ReservationStatus.confirmed)
 
             self.tryout_repo.update(tryout, tryout_update)
             self.repo.update(reservation, update_data)
@@ -149,11 +150,69 @@ class ReservationService:
                 )
                 self.tryout_repo.update(tryout, tryout_update)
 
-            reservation_update = ReservationUpdateRequest(
-                status=ReservationStatus.deleted
-            )
+            reservation_update = ReservationUpdate(status=ReservationStatus.deleted)
             self.repo.update(reservation, reservation_update)
 
             return reservation
 
         return TransactionHelper(self.session).run(operation)
+
+    def update_reservation(
+        self,
+        user: User,
+        reservation_id: int,
+        update_data: ReservationUpdate,
+    ) -> Reservation:
+        def operation():
+            reservation = self.repo.get_by_id(reservation_id, for_update=True)
+            tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
+            now = datetime.now()
+
+            self.__validate_update_reservation(
+                user, reservation, update_data, tryout, now
+            )
+
+            new_seats = update_data.reserved_seats
+            diff = new_seats - reservation.reserved_seats
+            if reservation.status == ReservationStatus.confirmed:
+                tryout_update = TryoutUpdateRequest(
+                    confirmed_reserved_count=tryout.confirmed_reserved_count + diff
+                )
+                self.tryout_repo.update(tryout, tryout_update)
+
+            return self.repo.update(
+                reservation, ReservationUpdate(reserved_seats=new_seats)
+            )
+
+        return TransactionHelper(self.session).run(operation)
+
+    def __validate_update_reservation(
+        self,
+        user: User,
+        reservation: Reservation,
+        update_data: ReservationUpdate,
+        tryout: Tryout,
+        now: datetime,
+    ) -> None:
+        if not user.is_superuser and reservation.user_id != user.id:
+            raise AuthorizationError("본인 예약만 수정할 수 있습니다.")
+
+        if reservation.status == ReservationStatus.deleted:
+            raise BadRequestError("삭제된 예약은 수정할 수 없습니다.")
+
+        if not user.is_superuser and reservation.status == ReservationStatus.confirmed:
+            raise BadRequestError("확정된 예약은 수정할 수 없습니다.")
+
+        if tryout.start_time <= now:
+            raise BadRequestError("시험 시작 이후에는 예약을 수정할 수 없습니다.")
+
+        if (
+            update_data.reserved_seats is None
+            or update_data.reserved_seats == reservation.reserved_seats
+        ):
+            raise BadRequestError("변경된 데이터가 없습니다.")
+
+        new_seats = update_data.reserved_seats
+        diff = new_seats - reservation.reserved_seats
+        if diff > 0 and tryout.confirmed_reserved_count + diff > tryout.max_capacity:
+            raise TryoutFullError("최대 예약 인원을 초과할 수 없습니다.")

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.dependencies import SessionDep, get_current_active_superuser, get_current_user
 from app.models.common import PaginatedResponse
-from app.models.reservations import Reservation
+from app.models.reservations import Reservation, ReservationUpdateRequest
 from app.models.users import User
 from app.services.reservations import ReservationService
 
@@ -72,4 +72,22 @@ def reject_reservation(
 ) -> Reservation:
     return ReservationService(session).delete_reservation(
         reservation_id, current_user=current_user
+    )
+
+
+@router.patch(
+    "/{reservation_id}",
+    response_model=Reservation,
+    summary="예약 수정",
+)
+def update_reservation(
+    reservation_id: int,
+    update_data: ReservationUpdateRequest,
+    session: SessionDep,
+    current_user: User = Depends(get_current_user),
+) -> Reservation:
+    return ReservationService(session).update_reservation(
+        reservation_id=reservation_id,
+        update_data=update_data,
+        user=current_user,
     )

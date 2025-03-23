@@ -9,7 +9,7 @@ from app.models.reservations import (
     Reservation,
     ReservationCreate,
     ReservationStatus,
-    ReservationUpdateRequest,
+    ReservationUpdate,
 )
 from app.models.tryouts import Tryout
 from app.models.users import User
@@ -33,6 +33,7 @@ class ReservationRepository:
             and_(
                 col(Reservation.user_id) == user_id,
                 col(Reservation.tryout_id).in_(tryout_ids),
+                col(Reservation.status) != ReservationStatus.deleted,
             )
         )
         return set(self.session.exec(stmt).all())
@@ -75,7 +76,7 @@ class ReservationRepository:
         return result
 
     def update(
-        self, reservation: Reservation, update_data: ReservationUpdateRequest
+        self, reservation: Reservation, update_data: ReservationUpdate
     ) -> Reservation:
         if update_data.reserved_seats is not None:
             reservation.reserved_seats = update_data.reserved_seats
@@ -87,3 +88,17 @@ class ReservationRepository:
         self.session.commit()
         self.session.refresh(reservation)
         return reservation
+
+    def get_by_user_and_tryout(
+        self, user_id: uuid.UUID, tryout_id: int, for_update: bool = False
+    ) -> Reservation | None:
+        stmt = select(Reservation).where(
+            and_(
+                col(Reservation.user_id) == user_id,
+                col(Reservation.tryout_id) == tryout_id,
+            )
+        )
+        if for_update:
+            stmt = stmt.with_for_update()
+
+        return self.session.exec(stmt).first()

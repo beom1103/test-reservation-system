@@ -5,7 +5,12 @@ from sqlmodel import Session
 
 from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
-from app.models.reservations import Reservation, ReservationCreate
+from app.models.reservations import (
+    Reservation,
+    ReservationCreate,
+    ReservationStatus,
+    ReservationUpdate,
+)
 from app.models.tryouts import TryoutPublic
 from app.repository.tryouts import TryoutRepository
 from app.services.reservations import ReservationService
@@ -62,6 +67,17 @@ class TryoutService:
             self.reservation_service.validate_reservation_or_raise(
                 tryout, user_id, reserved_seats, datetime.now()
             )
+
+            existing = self.reservation_service.repo.get_by_user_and_tryout(
+                user_id=user_id, tryout_id=tryout_id, for_update=True
+            )
+
+            if existing and existing.status == ReservationStatus.deleted:
+                update_data = ReservationUpdate(
+                    status=ReservationStatus.pending,
+                    reserved_seats=reserved_seats,
+                )
+                return self.reservation_service.repo.update(existing, update_data)
 
             reservation_in = ReservationCreate(
                 user_id=user_id,

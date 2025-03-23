@@ -38,9 +38,10 @@ def register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(TryoutFullError)
-    async def tryout_full_handler(_: Request, __: TryoutFullError) -> JSONResponse:
+    async def tryout_full_handler(_: Request, exc: TryoutFullError) -> JSONResponse:
         return JSONResponse(
-            status_code=400, content={"detail": "정원이 가득 찼습니다."}
+            status_code=400,
+            content={"detail": str(exc) or "정원이 가득 찼습니다."},
         )
 
     @app.exception_handler(ReservationNotFoundError)
