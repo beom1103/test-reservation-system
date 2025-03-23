@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from sqlmodel import Session
@@ -18,7 +19,7 @@ class TryoutService:
         self.reservation_service = ReservationService(session)
         self.repo = TryoutRepository(session)
 
-    def get_tryout_by_id(self, tryout_id: int, user_id: int) -> TryoutPublic:
+    def get_tryout_by_id(self, tryout_id: int, user_id: uuid.UUID) -> TryoutPublic:
         tryout = self.repo.get_by_id(tryout_id)
         if not tryout:
             from fastapi import HTTPException
@@ -34,7 +35,7 @@ class TryoutService:
         )
 
     def paginate_upcoming_tryouts(
-        self, user_id: int, limit: int, offset: int
+        self, user_id: uuid.UUID, limit: int, offset: int
     ) -> PaginatedResponse[TryoutPublic]:
         now = datetime.now()
         tryouts = self.repo.paginate_upcoming(now=now, limit=limit, offset=offset)

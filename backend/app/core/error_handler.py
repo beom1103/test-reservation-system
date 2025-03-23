@@ -11,7 +11,7 @@ from app.core.exceptions import (
 )
 
 
-def register_error_handlers(app):
+def register_error_handlers(app) -> None:
     @app.exception_handler(TryoutNotFoundError)
     async def tryout_not_found_handler(_: Request, __: TryoutNotFoundError):
         return JSONResponse(
