@@ -17,7 +17,7 @@ class TryoutRepository:
         self.session.refresh(tryout)
         return tryout
 
-    def get_by_id(self, id: int, for_update: bool = False) -> Tryout | None:
+    def get_by_id(self, id: int, for_update: bool = False) -> Tryout:
         result = self.session.get(Tryout, id, with_for_update=for_update)
 
         if not result:
