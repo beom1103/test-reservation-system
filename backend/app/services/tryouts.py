@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlmodel import Session
 
-from app.core.exceptions import AuthorizationError
+from app.core.exceptions import AuthorizationError, NotFoundError
 from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
 from app.models.reservations import (
@@ -26,9 +26,7 @@ class TryoutService:
     def get_tryout_by_id(self, tryout_id: int, user_id: uuid.UUID) -> TryoutPublic:
         tryout = self.repo.get_by_id(tryout_id)
         if not tryout:
-            from fastapi import HTTPException
-
-            raise HTTPException(status_code=404, detail="Tryout not found")
+            raise NotFoundError("Tryout not found")
 
         reserved_ids = self.reservation_service.repo.get_user_reserved_tryout_ids(
             user_id=user_id, tryout_ids=[tryout_id]
