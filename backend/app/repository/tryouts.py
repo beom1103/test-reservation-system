@@ -22,7 +22,9 @@ class TryoutRepository:
             return self.session.exec(stmt).first()
         return self.session.get(Tryout, tryout_id)
 
-    def paginate_upcoming(self, now: datetime, limit=20, offset=0) -> list[Tryout]:
+    def paginate_upcoming(
+        self, now: datetime, limit: int = 20, offset: int = 0
+    ) -> list[Tryout]:
         stmt = (
             select(Tryout)
             .where(Tryout.start_time > now)
@@ -33,6 +35,6 @@ class TryoutRepository:
         )
         return self.session.exec(stmt).all()
 
-    def count_upcoming(self, now) -> int:
+    def count_upcoming(self, now: datetime) -> int:
         stmt = select(func.count()).select_from(Tryout).where(Tryout.start_time > now)
         return self.session.exec(stmt).one()
