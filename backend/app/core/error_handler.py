@@ -6,19 +6,18 @@ from app.core.exceptions import (
     AuthorizationError,
     BadRequestError,
     InvalidReservationPeriodError,
+    NotFoundError,
     ReservationNotFoundError,
     TryoutFullError,
-    TryoutNotFoundError,
 )
 
 
 def register_error_handlers(app: FastAPI) -> None:
-    @app.exception_handler(TryoutNotFoundError)
-    async def tryout_not_found_handler(
-        _: Request, __: TryoutNotFoundError
-    ) -> JSONResponse:
+    @app.exception_handler(NotFoundError)
+    async def not_found_handler(_: Request, exc: NotFoundError) -> JSONResponse:
         return JSONResponse(
-            status_code=404, content={"detail": "시험을 찾을 수 없습니다."}
+            status_code=404,
+            content={"detail": str(exc) or "해당 리소스를 찾을 수 없습니다."},
         )
 
     @app.exception_handler(InvalidReservationPeriodError)

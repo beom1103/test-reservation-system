@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from backend.app.core.exceptions import NotFoundError
 from sqlmodel import Session, func, select
 
 from app.models.tryouts import Tryout, TryoutCreate, TryoutUpdateRequest
@@ -16,8 +17,13 @@ class TryoutRepository:
         self.session.refresh(tryout)
         return tryout
 
-    def get_by_id(self, tryout_id: int, for_update: bool = False) -> Tryout | None:
-        return self.session.get(Tryout, tryout_id, with_for_update=for_update)
+    def get_by_id(self, id: int, for_update: bool = False) -> Tryout | None:
+        result = self.session.get(Tryout, id, with_for_update=for_update)
+
+        if not result:
+            raise NotFoundError(f"예약을 찾을 수 없습니다. (id: ${id})")
+
+        return result
 
     def paginate_upcoming(
         self, now: datetime, limit: int = 20, offset: int = 0

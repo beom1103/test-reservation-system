@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import and_, exists, func
 from sqlmodel import Session, col, select
 
+from app.core.exceptions import NotFoundError
 from app.models.reservations import (
     Reservation,
     ReservationCreate,
@@ -45,9 +46,7 @@ class ReservationRepository:
                     col(Reservation.user_id) == user_id,
                     col(Tryout.start_time) < end_time,
                     col(Tryout.end_time) > start_time,
-                    col(Reservation.status).in_(
-                        [ReservationStatus.pending, ReservationStatus.confirmed]
-                    ),
+                    col(Reservation.status) != ReservationStatus.deleted,
                 )
             )
         )
@@ -69,8 +68,11 @@ class ReservationRepository:
         stmt = stmt.offset(offset).limit(limit)
         return list(self.session.exec(stmt).all())
 
-    def get_by_id(self, id: int, for_update: bool = False) -> Reservation | None:
-        return self.session.get(Reservation, id, with_for_update=for_update)
+    def get_by_id(self, id: int, for_update: bool = False) -> Reservation:
+        result = self.session.get(Reservation, id, with_for_update=for_update)
+        if not result:
+            raise NotFoundError(f"예약을 찾을 수 없습니다. (id:${id} )")
+        return result
 
     def update(
         self, reservation: Reservation, update_data: ReservationUpdateRequest

@@ -9,8 +9,7 @@ from sqlmodel import Field, SQLModel
 class ReservationStatus(str, Enum):
     pending = "pending"
     confirmed = "confirmed"
-    cancelled = "cancelled"
-    rejected = "rejected"
+    deleted = "deleted"
 
 
 class ReservationBase(SQLModel):

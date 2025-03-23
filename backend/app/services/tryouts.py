@@ -3,9 +3,6 @@ from datetime import datetime
 
 from sqlmodel import Session
 
-from app.core.exceptions import (
-    TryoutNotFoundError,
-)
 from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
 from app.models.reservations import Reservation, ReservationCreate
@@ -61,8 +58,6 @@ class TryoutService:
     ) -> Reservation:
         def operation() -> Reservation:
             tryout = self.repo.get_by_id(tryout_id, for_update=True)
-            if not tryout:
-                raise TryoutNotFoundError()
 
             self.reservation_service.validate_reservation_or_raise(
                 tryout, user_id, reserved_seats, datetime.now()

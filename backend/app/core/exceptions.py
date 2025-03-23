@@ -1,4 +1,4 @@
-class TryoutNotFoundError(Exception):
+class NotFoundError(Exception):
     pass
 
 

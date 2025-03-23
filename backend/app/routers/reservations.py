@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from app.dependencies import SessionDep, get_current_user
+from app.dependencies import SessionDep, get_current_active_superuser, get_current_user
 from app.models.common import PaginatedResponse
 from app.models.reservations import Reservation
 from app.models.users import User
@@ -51,41 +51,25 @@ def get_reservation_by_id(
     "/{reservation_id}/confirm",
     response_model=Reservation,
     summary="예약 확정",
+    dependencies=Depends(get_current_active_superuser),
 )
 def confirm_reservation(
     reservation_id: int,
     session: SessionDep,
-    current_user: User = Depends(get_current_user),
 ) -> Reservation:
-    return ReservationService(session).confirm_reservation(
-        reservation_id, current_user=current_user
-    )
+    return ReservationService(session).confirm_reservation(reservation_id)
 
 
-@router.post(
-    "/{reservation_id}/reject",
+@router.delete(
+    "/{reservation_id}/delete",
     response_model=Reservation,
-    summary="예약 거절",
+    summary="예약 삭제",
 )
 def reject_reservation(
     reservation_id: int,
     session: SessionDep,
     current_user: User = Depends(get_current_user),
 ) -> Reservation:
-    return ReservationService(session).reject_reservation(
+    return ReservationService(session).delete_reservation(
         reservation_id, current_user=current_user
     )
-
-
-# @router.patch("/{reservation_id}", response_model=Reservation, summary="예약 수정")
-# def update_reservation(
-#     reservation_id: int,
-#     data: ReservationUpdateRequest,
-#     session: SessionDep,
-#     current_user: User = Depends(get_current_user),
-# ) -> Reservation:
-#     return ReservationService(session).update_reservation(
-#         reservation_id=reservation_id,
-#         data=data,
-#         current_user=current_user,
-#     )

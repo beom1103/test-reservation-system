@@ -8,9 +8,7 @@ from app.core.exceptions import (
     AuthorizationError,
     BadRequestError,
     InvalidReservationPeriodError,
-    ReservationNotFoundError,
     TryoutFullError,
-    TryoutNotFoundError,
 )
 from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
@@ -68,72 +66,79 @@ class ReservationService:
         self, reservation_id: int, current_user: User
     ) -> Reservation:
         reservation = self.repo.get_by_id(reservation_id)
-        if not reservation:
-            raise ReservationNotFoundError()
 
         if not current_user.is_superuser and reservation.user_id != current_user.id:
             raise AuthorizationError("접근 권한이 없습니다.")
 
         return Reservation.model_validate(reservation)
 
-    def reject_reservation(
-        self, reservation_id: int, current_user: User
-    ) -> Reservation:
-        return self.__update_status(
-            reservation_id=reservation_id,
-            new_status=ReservationStatus.cancelled,
-            current_user=current_user,
-            adjust_capacity=False,
-        )
-
     def confirm_reservation(
-        self, reservation_id: int, current_user: User
-    ) -> Reservation:
-        return self.__update_status(
-            reservation_id=reservation_id,
-            new_status=ReservationStatus.confirmed,
-            current_user=current_user,
-            adjust_capacity=True,
-        )
-
-    def __update_status(
         self,
         reservation_id: int,
-        new_status: str,
-        current_user: User,
-        adjust_capacity: bool,
     ) -> Reservation:
-        if not current_user.is_superuser:
-            raise AuthorizationError("어드민만 예약 상태를 변경할 수 있습니다.")
-
         def operation():
             reservation = self.repo.get_by_id(reservation_id, for_update=True)
-            if not reservation:
-                raise ReservationNotFoundError()
 
             if reservation.status != ReservationStatus.pending:
-                raise BadRequestError("이미 확정되었거나 취소된 예약입니다.")
+                raise BadRequestError("이미 확정되었거나 삭제된 예약입니다.")
 
             tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
 
-            if not tryout:
-                raise TryoutNotFoundError()
-
-            if adjust_capacity:
-                if (
-                    tryout.confirmed_reserved_count + reservation.reserved_seats
-                    > tryout.max_capacity
-                ):
-                    raise TryoutFullError()
-
-                tryout_update = TryoutUpdateRequest(
-                    confirmed_reserved_count=tryout.confirmed_reserved_count
-                    + reservation.reserved_seats
+            now = datetime.now()
+            if tryout.start_time <= now:
+                raise BadRequestError(
+                    "시험 시작 시간이 지난 예약은 확정할 수 없습니다."
                 )
+
+            if (
+                tryout.confirmed_reserved_count + reservation.reserved_seats
+                > tryout.max_capacity
+            ):
+                raise TryoutFullError()
+
+            updated_count = tryout.confirmed_reserved_count + reservation.reserved_seats
+            tryout_update = TryoutUpdateRequest(confirmed_reserved_count=updated_count)
+
+            tryout.confirmed_reserved_count += reservation.reserved_seats
+            update_data = ReservationUpdateRequest(status=ReservationStatus.confirmed)
+
+            self.tryout_repo.update(tryout, tryout_update)
+            self.repo.update(reservation, update_data)
+
+            return reservation
+
+        return TransactionHelper(self.session).run(operation)
+
+    def delete_reservation(
+        self, reservation_id: int, current_user: User
+    ) -> Reservation:
+        def operation():
+            reservation = self.repo.get_by_id(reservation_id, for_update=True)
+
+            is_admin = current_user.is_superuser
+
+            if not is_admin and reservation.status != ReservationStatus.pending:
+                raise BadRequestError("확정된 예약은 삭제할 수 없습니다.")
+
+            tryout = self.tryout_repo.get_by_id(reservation.tryout_id, for_update=True)
+
+            if reservation.status == ReservationStatus.confirmed:
+                if tryout.confirmed_reserved_count < reservation.reserved_seats:
+                    raise BadRequestError("확정 인원 수가 잘못되었습니다.")
+
+                updated_count = (
+                    tryout.confirmed_reserved_count - reservation.reserved_seats
+                )
+                tryout_update = TryoutUpdateRequest(
+                    confirmed_reserved_count=updated_count
+                )
+
                 self.tryout_repo.update(tryout, tryout_update)
 
-            update_data = ReservationUpdateRequest(status=new_status)
-            self.repo.update(reservation, update_data)
+            reservation_update = ReservationUpdateRequest(
+                status=ReservationStatus.deleted
+            )
+            self.repo.update(reservation, reservation_update)
 
             return reservation
 
