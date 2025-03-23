@@ -51,7 +51,7 @@ def get_reservation_by_id(
     "/{reservation_id}/confirm",
     response_model=Reservation,
     summary="예약 확정",
-    dependencies=Depends(get_current_active_superuser),
+    dependencies=[Depends(get_current_active_superuser)],
 )
 def confirm_reservation(
     reservation_id: int,
