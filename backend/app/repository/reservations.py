@@ -4,7 +4,13 @@ from datetime import datetime
 from sqlalchemy import and_, exists, func
 from sqlmodel import Session, col, select
 
-from app.models.reservations import Reservation, ReservationCreate
+from app.core.exceptions import NotFoundError
+from app.models.reservations import (
+    Reservation,
+    ReservationCreate,
+    ReservationStatus,
+    ReservationUpdate,
+)
 from app.models.tryouts import Tryout
 from app.models.users import User
 
@@ -27,6 +33,7 @@ class ReservationRepository:
             and_(
                 col(Reservation.user_id) == user_id,
                 col(Reservation.tryout_id).in_(tryout_ids),
+                col(Reservation.status) != ReservationStatus.deleted,
             )
         )
         return set(self.session.exec(stmt).all())
@@ -40,6 +47,7 @@ class ReservationRepository:
                     col(Reservation.user_id) == user_id,
                     col(Tryout.start_time) < end_time,
                     col(Tryout.end_time) > start_time,
+                    col(Reservation.status) != ReservationStatus.deleted,
                 )
             )
         )
@@ -61,5 +69,36 @@ class ReservationRepository:
         stmt = stmt.offset(offset).limit(limit)
         return list(self.session.exec(stmt).all())
 
-    def get_by_id(self, id: int) -> Reservation | None:
-        return self.session.get(Reservation, id)
+    def get_by_id(self, id: int, for_update: bool = False) -> Reservation:
+        result = self.session.get(Reservation, id, with_for_update=for_update)
+        if not result:
+            raise NotFoundError(f"예약을 찾을 수 없습니다. (id:${id} )")
+        return result
+
+    def update(
+        self, reservation: Reservation, update_data: ReservationUpdate
+    ) -> Reservation:
+        if update_data.reserved_seats is not None:
+            reservation.reserved_seats = update_data.reserved_seats
+
+        if update_data.status is not None:
+            reservation.status = update_data.status
+
+        self.session.add(reservation)
+        self.session.commit()
+        self.session.refresh(reservation)
+        return reservation
+
+    def get_by_user_and_tryout(
+        self, user_id: uuid.UUID, tryout_id: int, for_update: bool = False
+    ) -> Reservation | None:
+        stmt = select(Reservation).where(
+            and_(
+                col(Reservation.user_id) == user_id,
+                col(Reservation.tryout_id) == tryout_id,
+            )
+        )
+        if for_update:
+            stmt = stmt.with_for_update()
+
+        return self.session.exec(stmt).first()

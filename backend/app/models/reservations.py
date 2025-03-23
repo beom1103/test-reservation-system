@@ -1,13 +1,15 @@
 import uuid
+from enum import Enum
 
+from pydantic import BaseModel
 from sqlalchemy import UniqueConstraint
-from sqlmodel import Enum, Field, SQLModel
+from sqlmodel import Field, SQLModel
 
 
 class ReservationStatus(str, Enum):
     pending = "pending"
     confirmed = "confirmed"
-    cancelled = "cancelled"
+    deleted = "deleted"
 
 
 class ReservationBase(SQLModel):
@@ -30,3 +32,16 @@ class Reservation(ReservationBase, table=True):
 
 class ReservationPublic(ReservationBase):
     id: int
+
+
+class ReservationUpdate(BaseModel):
+    status: str | None = Field(default=None, description="변경할 예약 상태")
+    reserved_seats: int | None = Field(
+        default=None, ge=1, le=50000, description="변경할 응시 인원 수"
+    )
+
+
+class ReservationUpdateRequest(BaseModel):
+    reserved_seats: int = Field(
+        default=None, ge=1, le=50000, description="변경할 응시 인원 수"
+    )

@@ -3,13 +3,17 @@ from datetime import datetime
 
 from sqlmodel import Session
 
-from app.core.exceptions import (
-    TryoutNotFoundError,
-)
+from app.core.exceptions import AuthorizationError
 from app.core.transaction import TransactionHelper
 from app.models.common import PaginatedResponse
-from app.models.reservations import Reservation, ReservationCreate
+from app.models.reservations import (
+    Reservation,
+    ReservationCreate,
+    ReservationStatus,
+    ReservationUpdate,
+)
 from app.models.tryouts import TryoutPublic
+from app.models.users import User
 from app.repository.tryouts import TryoutRepository
 from app.services.reservations import ReservationService
 
@@ -57,19 +61,31 @@ class TryoutService:
         )
 
     def reserve_tryout(
-        self, user_id: uuid.UUID, tryout_id: int, reserved_seats: int = 1
+        self, user: User, tryout_id: int, reserved_seats: int = 1
     ) -> Reservation:
+        if user.is_superuser:
+            raise AuthorizationError("Admin은 시험 신청이 불가합니다.")
+
         def operation() -> Reservation:
             tryout = self.repo.get_by_id(tryout_id, for_update=True)
-            if not tryout:
-                raise TryoutNotFoundError()
 
             self.reservation_service.validate_reservation_or_raise(
-                tryout, user_id, reserved_seats, datetime.now()
+                tryout, user.id, reserved_seats, datetime.now()
             )
 
+            existing = self.reservation_service.repo.get_by_user_and_tryout(
+                user_id=user.id, tryout_id=tryout_id, for_update=True
+            )
+
+            if existing and existing.status == ReservationStatus.deleted:
+                update_data = ReservationUpdate(
+                    status=ReservationStatus.pending,
+                    reserved_seats=reserved_seats,
+                )
+                return self.reservation_service.repo.update(existing, update_data)
+
             reservation_in = ReservationCreate(
-                user_id=user_id,
+                user_id=user.id,
                 tryout_id=tryout_id,
                 reserved_seats=reserved_seats,
             )

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
 
@@ -25,3 +26,9 @@ class Tryout(TryoutBase, table=True):
 class TryoutPublic(TryoutBase):
     id: int
     isApplied: bool
+
+
+class TryoutUpdateRequest(BaseModel):
+    confirmed_reserved_count: int | None = Field(
+        default=None, description="확정된 예약 수"
+    )
