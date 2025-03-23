@@ -43,13 +43,14 @@ class ReservationRepository:
                 )
             )
         )
-        return bool(self.session.exec(stmt).scalar())
+        result = self.session.exec(stmt).one()
+        return bool(result)
 
     def count_user_reservations(self, user: User) -> int:
         stmt = select(func.count()).select_from(Reservation)
         if not user.is_superuser:
             stmt = stmt.where(Reservation.user_id == user.id)
-        return self.session.exec(stmt).scalar_one()
+        return self.session.exec(stmt).one()
 
     def paginate_user_reservations(
         self, user: User, limit: int, offset: int
